@@ -61,19 +61,23 @@ class ModifiedSRCNN(nn.Module):
         residual_beta (float): Residual connection weight
         """
         super().__init__(*args, **kwargs)
-        self.conv1 = ConvBlock(in_channels, n1, kernel_size=f1, stride=1, padding=4, use_activation=True)
-        self.blocks = nn.Sequential(*[RRDB(n1, residual_beta=0.5) for _ in range(num_blocks)])
-        self.conv2 = ConvBlock(n1, n2, kernel_size=f2, stride=1, padding=2, use_activation=True)
-        self.conv3 = ConvBlock(n2 + in_channels, in_channels, kernel_size=f3, stride=1, padding=2, use_activation=False)
+        self.conv1 = ConvBlock(in_channels, n1, kernel_size=f1, stride=1, padding=(1, 1, 1), use_activation=True)
+        self.blocks = nn.Sequential(*[RRDB(n1 + in_channels, residual_beta=0.5) for _ in range(num_blocks)])
+        self.conv2 = ConvBlock(2 * (n1 + in_channels), n2, kernel_size=f2, stride=1, padding=(1, 1, 1), use_activation=True)
+        self.conv3 = ConvBlock(n2 + n1 + in_channels, in_channels, kernel_size=f3, stride=1, padding=1, use_activation=False)
+        self._initialize_weights()
 
     def forward(self, x):
         initial = x 
         x = self.conv1(x)
+        x = torch.concat([x, initial], dim = 1)
+        initial = x
         x = self.blocks(x)
-        x = self.conv2(x)
-        # x = torch.concat([x, initial], dim=1)
+        x = torch.concat([x, initial], dim = 1)
+        x = self.conv2(x) # Take feature maps here
+        x = torch.concat([x, initial], dim=1)
         x = self.conv3(x)
-        return x
+        return x 
     
     def _initialize_weights(self):
         for m in self.modules():
@@ -81,3 +85,17 @@ class ModifiedSRCNN(nn.Module):
                 torch.nn.init.xavier_uniform_(m.weight)
                 if m.bias is not None:
                     torch.nn.init.zeros_(m.bias)
+
+
+if __name__ == "__main__":
+    random_tensor = torch.rand(32, 7, 50, 20, 20, dtype=torch.float16).to(DEVICE)
+    in_channels = 7
+    num_blocks = 4
+    n1 = 32
+    n2 = 128
+    f1 = 3
+    f2 = 3
+    f3 = 3
+    srcnn = ModifiedSRCNN(in_channels = in_channels, num_blocks = num_blocks, n1 = n1, n2 = n2, f1 = f1, f2 = f2, f3 = f3).to(DEVICE).half()
+    output = srcnn(random_tensor)
+    print(output.shape)

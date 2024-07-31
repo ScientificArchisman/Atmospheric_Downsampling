@@ -88,7 +88,7 @@ class ModifiedSRCNN(nn.Module):
 if __name__ == "__main__":
     random_tensor = torch.rand(32, 7, 50, 20, 20, dtype=torch.float16).to(DEVICE)
     in_channels = 7
-    num_blocks = 4
+    num_blocks = 2
     n1 = 32
     n2 = 128
     f1 = 3

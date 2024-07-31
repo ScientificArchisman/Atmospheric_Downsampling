@@ -6,7 +6,7 @@ High resolution (***696 time points***, 7 variables, ***75 pressure, 315 lat, 42
 
 Upsample to high res shape -> (696, 7, 75, 315, 423)
 
-- [ ] **Pass through Model and Check**
+- [x] **Pass through Model and Check**
 Model has been built in `mod_srcnn.py`. After upsamplimg, test with one batch of size (1, 7, 75, 315, 423) and check the output shape.
 
 - [ ] **Create data loaders**

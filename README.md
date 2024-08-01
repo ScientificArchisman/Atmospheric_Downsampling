@@ -28,4 +28,4 @@ The preprocessing pipeline is embedded in the [dataloading script](02-dataloadin
 - The data was broken down into ```P x P ``` chunks in the dataloader class. So, the final shape of the data was ```(P, N1, N2, N3/P, N4/P)```.
 
 The following figure shows a chunked representation of the data. The data is broken down into 16x16 chunks. 
-<img src = "Images/chunks.png"  alt="Chunked Data" width="500" height="400">
+<img src = "Images/chunks.png"  alt="Chunked Data" width="600" height="500">

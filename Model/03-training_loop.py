@@ -4,7 +4,8 @@ import time
 from tqdm import tqdm
 import torch
 
-def train_model(model, train_loader, val_loader, criterion, optimizer, num_epochs, device, log_folder, patience=5):
+def train_model(model, train_loader, val_loader, criterion, optimizer, 
+                num_epochs, device, log_folder, patience=5):
     # Move model to the specified device
     model.to(device)
     

@@ -82,13 +82,15 @@ if __name__ == "__main__":
     #             "longitude": ozone_2011["west_east"]})
 
     ## DATASHAPE: (N_VARIABLES, TIME_POINTS, LATITUDE_POINTS, LONGITUDE_POINTS)
+
     high_res_data = np.random.rand(2, 100, 1024, 1024)
     low_res_data = np.random.rand(2, 100, 1024, 1024)
 
     dataset = WRFDataset(high_res_data, low_res_data, 16, 16)
-    train_loader, valid_loader, test_loader = create_loaders(dataset, 16)
+    train_loader, valid_loader, test_loader = create_loaders(dataset, 8)
 
     for i, (high_res_chunk, low_res_chunk) in enumerate(train_loader):
+        # OUTPUT SHAPE: (BATCH_SIZE, N_VARIABLES, TIME_POINTS, CHUNK_SIZE_LAT, CHUNK_SIZE_LONG)
         print(f"Batch {i}")
         print(f"High-res chunk shape: {high_res_chunk.shape}")
         print(f"Low-res chunk shape: {low_res_chunk.shape}")

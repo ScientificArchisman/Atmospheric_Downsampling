@@ -37,15 +37,15 @@ Min-max scaling, also known as normalization, is a technique used to transform d
 In this implementation, we applied min-max scaling to a multidimensional dataset with the shape `(N_VARIABLES, N_TIME_POINTS, N_LAT, N_LONG)`. The scaling is performed independently for each variable and each time point across the spatial dimensions (latitude and longitude).
 
 
-For a given data value \( x \) within the dataset, the min-max scaling transformation is defined as:
+For a given data value $x$ within the dataset, the min-max scaling transformation is defined as:
 
-\[ x' = \frac{x - x_{\min}}{x_{\max} - x_{\min}} \]
+$$x' = \frac{x - x_{\min}}{x_{\max} - x_{\min}}$$
 
 where:
-- \( x \) is the original data value.
-- \( x_{\min} \) is the minimum value in the original data.
-- \( x_{\max} \) is the maximum value in the original data.
-- \( x' \) is the transformed data value in the range [0, 1].
+- $x$ is the original data value.
+- $x_{\min}$ is the minimum value in the original data.
+- $x_{\max}$ is the maximum value in the original data.
+- $x'$ is the transformed data value in the range [0, 1].
 .
 
 #### Example Code

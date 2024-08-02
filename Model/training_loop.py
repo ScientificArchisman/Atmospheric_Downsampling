@@ -6,6 +6,7 @@ import torch
 from mod_srcnn import ModifiedSRCNN
 import config
 from data_loading import WRFDataset, create_loaders
+from torch.cuda.amp import autocast, GradScaler
 import xarray as xr
 
 def train_model(model, train_loader, val_loader, criterion, optimizer, 
@@ -37,6 +38,8 @@ def train_model(model, train_loader, val_loader, criterion, optimizer,
     best_loss = float('inf')
     patience_counter = 0
     
+    scaler = GradScaler()
+    
     with open(log_file, 'w') as log:
         log.write('Epoch,Train Loss,Val Loss,Epoch Time\n')
         
@@ -47,13 +50,22 @@ def train_model(model, train_loader, val_loader, criterion, optimizer,
             model.train()
             train_losses = []
             for hr_images, lr_images in train_loader:
-                print(hr_images.shape, lr_images.shape)
                 hr_images, lr_images = hr_images.to(device), lr_images.to(device)
                 optimizer.zero_grad()
-                sr_images = model(lr_images)
-                loss = criterion(sr_images, hr_images)
-                loss.backward()
-                optimizer.step()
+                
+                # Enable autocast context for mixed precision training
+                with autocast():
+                    sr_images = model(lr_images)
+                    loss = criterion(sr_images, hr_images)
+                
+                # Scale the loss and backward pass
+                scaler.scale(loss).backward()
+                
+                # Clip gradients to prevent exploding gradients
+                torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=1.0)
+            
+                scaler.step(optimizer)
+                scaler.update()
                 
                 train_losses.append(loss.item())
             
@@ -65,8 +77,9 @@ def train_model(model, train_loader, val_loader, criterion, optimizer,
             with torch.no_grad():
                 for hr_images, lr_images in val_loader:
                     hr_images, lr_images = hr_images.to(device), lr_images.to(device)
-                    sr_images = model(lr_images)
-                    loss = criterion(sr_images, hr_images)
+                    with autocast():
+                        sr_images = model(lr_images)
+                        loss = criterion(sr_images, hr_images)
                     val_losses.append(loss.item())
             
             val_loss = np.mean(val_losses)
@@ -89,12 +102,11 @@ def train_model(model, train_loader, val_loader, criterion, optimizer,
                 break
     
     return model
-    
 
 
 if __name__ == "__main__":
     model_srcnn = ModifiedSRCNN(in_channels=config.in_channels, num_blocks=config.num_blocks, 
-                          n1=config.n1, n2=config.n2, f1=config.f1, f2=config.f2, f3=config.f3).to(config.DEVICE)
+                          n1=config.n1, n2=config.n2, f1=config.f1, f2=config.f2, f3=config.f3)
     
     # LOAD the Data and cretae data loaders
     ozone_2011 = xr.open_dataset("/Volumes/Extreme SSD/PRL/data/high_res/WRF_2011.nc")
@@ -112,6 +124,7 @@ if __name__ == "__main__":
                 no_2011["no"].sel(bottom_top=PRESSURE_LEVEL), 
                 humidity_2011["QVAPOR"].sel(bottom_top=PRESSURE_LEVEL),
                 temp_2011["T2"]])
+    
 
     dataset = WRFDataset(dataset, dataset, config.LATITUDE_CHUNK_SIZE, config.LONGITUDE_CHUNK_SIZE)
     train_loader, valid_loader, test_loader = create_loaders(dataset, config.BATCH_SIZE)

@@ -3,13 +3,13 @@ from torch.utils.data import DataLoader, Dataset, random_split
 import numpy as np 
 import xarray as xr
 
-
 class WRFDataset(Dataset):
-    def __init__(self, high_res_data, low_res_data, chunk_size_lat, chunk_size_long):
+    def __init__(self, high_res_data, low_res_data, chunk_size_lat, chunk_size_long, use_half = False):
         self.high_res_data = high_res_data
         self.low_res_data = low_res_data
         self.chunk_size_lat = chunk_size_lat
         self.chunk_size_long = chunk_size_long
+        self.use_half = use_half
         
         # Ensure both datasets have the same shape
         assert high_res_data.shape == low_res_data.shape, "High-res and low-res data must have the same shape"
@@ -37,7 +37,8 @@ class WRFDataset(Dataset):
         high_res_chunk = self.high_res_data[:, :, lat_start:lat_end, long_start:long_end]
         low_res_chunk = self.low_res_data[:, :, lat_start:lat_end, long_start:long_end]
         
-        return torch.tensor(high_res_chunk, dtype=torch.float32), torch.tensor(low_res_chunk, dtype=torch.float32)
+        return torch.tensor(high_res_chunk, dtype=torch.float16 if self.use_half else torch.float32), torch.tensor(low_res_chunk, 
+                                                                                                                   dtype=torch.float16 if self.use_half else torch.float32)
 
 
 def create_loaders(dataset, batch_size: int = 16):
@@ -56,7 +57,6 @@ def create_loaders(dataset, batch_size: int = 16):
     test_loader = DataLoader(test_dataset, batch_size=batch_size, shuffle=False)
 
     return train_loader, valid_loader, test_loader
-
 
 if __name__ == "__main__":
     ozone_2011 = xr.open_dataset("/Volumes/Extreme SSD/PRL/data/high_res/WRF_2011.nc")

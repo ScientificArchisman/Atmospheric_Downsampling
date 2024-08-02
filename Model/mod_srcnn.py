@@ -2,7 +2,6 @@ import torch
 import torch.nn as nn
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-
 class ConvBlock(nn.Module):
     def __init__(self, in_channels, out_channels, kernel_size, stride, padding, use_activation: bool, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
@@ -67,6 +66,7 @@ class ModifiedSRCNN(nn.Module):
         self.conv2 = ConvBlock(2 * (n1 + in_channels), n2, kernel_size=f2, stride=1, padding=(1, 1, 1), use_activation=True)
         self.bn3 = nn.BatchNorm3d(n2)
         self.conv3 = ConvBlock(n2 + n1 + in_channels, in_channels, kernel_size=f3, stride=1, padding=1, use_activation=False)
+        self.bn4 = nn.BatchNorm3d(in_channels)
         self._initialize_weights()
 
     def forward(self, x):
@@ -84,6 +84,7 @@ class ModifiedSRCNN(nn.Module):
             x = self.bn3(x)
             x = torch.concat([x, initial], dim=1)
             x = self.conv3(x)
+            x = self.bn4(x)
         return x 
     
     def _initialize_weights(self):
@@ -92,7 +93,6 @@ class ModifiedSRCNN(nn.Module):
                 torch.nn.init.xavier_uniform_(m.weight)
                 if m.bias is not None:
                     torch.nn.init.zeros_(m.bias)
-
 
 if __name__ == "__main__":
     random_tensor = torch.rand(1, 7, 50, 20, 20, dtype=torch.float16).to(DEVICE)

@@ -30,13 +30,7 @@ The preprocessing pipeline is embedded in the [dataloading script](02-dataloadin
 The following figure shows a chunked representation of the data. The data is broken down into 16x16 chunks. 
 <img src = "Images/chunks.png"  alt="Chunked Data" width="600" height="500">
 
-### 02. Min-Max Scaling
-
-Certainly! Here is a description of the min-max scaling process that you can use for your GitHub README:
-
----
-
-## Min-Max Scaling of Multidimensional Data
+### 02. Min-Max Scaling of Multidimensional Data
 
 Min-max scaling, also known as normalization, is a technique used to transform data values to a specified range, typically [0, 1]. This process ensures that different features contribute proportionally during model training, improving the performance and convergence of machine learning algorithms. 
 

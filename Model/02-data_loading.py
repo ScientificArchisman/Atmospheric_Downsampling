@@ -59,34 +59,26 @@ def create_loaders(dataset, batch_size: int = 16):
 
 
 if __name__ == "__main__":
-    # ozone_2011 = xr.open_dataset("/Volumes/Extreme SSD/PRL/data/high_res/WRF_2011.nc")
-    # co_no2_2011 = xr.open_dataset("/Volumes/Extreme SSD/PRL/data/high_res/WRF_Archi_2011_CO_NO2.nc")
-    # no_2011 = xr.open_dataset("/Volumes/Extreme SSD/PRL/data/high_res/WRF_Archi_2011_NO.nc")
-    # humidity_2011 = xr.open_dataset("/Volumes/Extreme SSD/PRL/data/high_res/WRF_Archi_2011_SpecificHum.nc")
-    # temp_2011 = xr.open_dataset("/Volumes/Extreme SSD/PRL/data/high_res/WRF_2011_Archi_T.nc")
-    # TIME_POINTS, PRESSURE_POINTS, LAT_POINTS, LON_POINTS = ozone_2011["o3"].shape
+    ozone_2011 = xr.open_dataset("/Volumes/Extreme SSD/PRL/data/high_res/WRF_2011.nc")
+    co_no2_2011 = xr.open_dataset("/Volumes/Extreme SSD/PRL/data/high_res/WRF_Archi_2011_CO_NO2.nc")
+    no_2011 = xr.open_dataset("/Volumes/Extreme SSD/PRL/data/high_res/WRF_Archi_2011_NO.nc")
+    humidity_2011 = xr.open_dataset("/Volumes/Extreme SSD/PRL/data/high_res/WRF_Archi_2011_SpecificHum.nc")
+    temp_2011 = xr.open_dataset("/Volumes/Extreme SSD/PRL/data/high_res/WRF_2011_Archi_T.nc")
 
-    # combined_data = xr.Dataset(
-    #     {
-    #         "ozone": ozone_2011["o3"],
-    #         "pm25": ozone_2011["PM2_5_DRY"],
-    #         "co":  co_no2_2011["co"],
-    #         "no2": co_no2_2011["no2"],
-    #         "no": no_2011["no"],
-    #         "humidity": humidity_2011["QVAPOR"],
-    #         "temperature": temp_2011["T2"].expand_dims({"bottom_top": np.arange(PRESSURE_POINTS)}, axis=1)
-    #     },
-    #     coords={"time": ozone_2011["Times"], 
-    #             "pressure": ozone_2011["bottom_top"], 
-    #             "latitude": ozone_2011["south_north"], 
-    #             "longitude": ozone_2011["west_east"]})
+
+    PRESSURE_LEVEL = 2
+    dataset = np.array([ozone_2011["o3"].sel(bottom_top=PRESSURE_LEVEL), 
+                ozone_2011["PM2_5_DRY"].sel(bottom_top=PRESSURE_LEVEL),
+                co_no2_2011["co"].sel(bottom_top=PRESSURE_LEVEL), 
+                co_no2_2011["no2"].sel(bottom_top=PRESSURE_LEVEL), 
+                no_2011["no"].sel(bottom_top=PRESSURE_LEVEL), 
+                humidity_2011["QVAPOR"].sel(bottom_top=PRESSURE_LEVEL),
+                temp_2011["T2"]])
 
     ## DATASHAPE: (N_VARIABLES, TIME_POINTS, LATITUDE_POINTS, LONGITUDE_POINTS)
+    print(f"Dataset shape: {dataset.shape}")
 
-    high_res_data = np.random.rand(2, 100, 1024, 1024)
-    low_res_data = np.random.rand(2, 100, 1024, 1024)
-
-    dataset = WRFDataset(high_res_data, low_res_data, 16, 16)
+    dataset = WRFDataset(dataset, dataset, 16, 16)
     train_loader, valid_loader, test_loader = create_loaders(dataset, 8)
 
     for i, (high_res_chunk, low_res_chunk) in enumerate(train_loader):

@@ -9,11 +9,17 @@ Upsample to high res shape -> (696, 7, 75, 315, 423)
 - [x] **Pass through Model and Check**
 Model has been built in `mod_srcnn.py`. After upsamplimg, test with one batch of size (1, 7, 75, 315, 423) and check the output shape.
 
-- [ ] **Create data loaders**
+- [x] **Create data loaders**
 Create tensors from `xr.arrays` and create train and test data loaders.
 Train size = 80% of the data
 Validation size = 20% of the train data
 Test size = 20% of the data
+
+- [ ] **Test data loaders on combined data**
+Test the data loaders on the combined data and check the shape of the data(output). Also check if the indexing of the data is correct by plotting the data.
+
+- [ ] **Scripting**
+Write scripts to submit in the cluster and combine the data into one dataset
 
 - [ ] **Loss function**
 MSE loss function to calculate the loss between the predicted and actual data.

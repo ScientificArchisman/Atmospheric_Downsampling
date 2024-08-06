@@ -38,8 +38,6 @@ def train_model(model, train_loader, val_loader, criterion, optimizer,
     best_loss = float('inf')
     patience_counter = 0
     
-    scaler = GradScaler()
-    
     with open(log_file, 'w') as log:
         log.write('Epoch,Train Loss,Val Loss,Epoch Time\n')
         
@@ -58,14 +56,13 @@ def train_model(model, train_loader, val_loader, criterion, optimizer,
                     sr_images = model(lr_images)
                     loss = criterion(sr_images, hr_images)
                 
-                # Scale the loss and backward pass
-                scaler.scale(loss).backward()
+                # Backward pass
+                loss.backward()
                 
                 # Clip gradients to prevent exploding gradients
                 torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=1.0)
-            
-                scaler.step(optimizer)
-                scaler.update()
+                
+                optimizer.step()
                 
                 train_losses.append(loss.item())
             

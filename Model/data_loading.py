@@ -4,7 +4,6 @@ import numpy as np
 import xarray as xr
 import config
 
-
 class MinMaxScaleTransform:
     def __init__(self, high_res_data, low_res_data, use_half=False):
         self.use_half = use_half
@@ -81,7 +80,6 @@ def create_loaders(dataset, batch_size: int = 16):
     test_loader = DataLoader(test_dataset, batch_size=batch_size, shuffle=False)
 
     return train_loader, valid_loader, test_loader
-
 
 
 

@@ -4,6 +4,7 @@ NUM_EPOCHS: int = 1
 PATIENCE: int = 15
 BATCH_SIZE: int= 16
 LOG_FOLDER: str = "Logs"
+TENSORBOARD_LOGS: str = "runs/SRCNN"
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 ######### Dataloader hyperparameters ########

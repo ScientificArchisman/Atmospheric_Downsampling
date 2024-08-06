@@ -8,6 +8,9 @@ import config
 from data_loading import WRFDataset, create_loaders
 from torch.cuda.amp import autocast, GradScaler
 import xarray as xr
+from torch.utils.tensorboard import SummaryWriter
+
+writer = SummaryWriter(log_dir=config.TENSORBOARD_LOGS)
 
 def train_model(model, train_loader, val_loader, criterion, optimizer, 
                 num_epochs, device, log_folder, patience=5):
@@ -41,6 +44,8 @@ def train_model(model, train_loader, val_loader, criterion, optimizer,
     with open(log_file, 'w') as log:
         log.write('Epoch,Train Loss,Val Loss,Epoch Time\n')
         
+        batch_idx_train, batch_idx_val = 0, 0
+        print("Training started...")
         for epoch in tqdm(range(num_epochs), desc="Training Epochs"):
             start_time = time.time()
             
@@ -65,6 +70,8 @@ def train_model(model, train_loader, val_loader, criterion, optimizer,
                 optimizer.step()
                 
                 train_losses.append(loss.item())
+                writer.add_scalar("Loss/train", loss.item(), batch_idx_train)
+                batch_idx_train += 1
             
             train_loss = np.mean(train_losses)
             
@@ -78,6 +85,8 @@ def train_model(model, train_loader, val_loader, criterion, optimizer,
                         sr_images = model(lr_images)
                         loss = criterion(sr_images, hr_images)
                     val_losses.append(loss.item())
+                    writer.add_scalar("Loss/val", loss.item(), batch_idx_val)
+                    batch_idx_val += 1
             
             val_loss = np.mean(val_losses)
             
@@ -98,6 +107,7 @@ def train_model(model, train_loader, val_loader, criterion, optimizer,
                 print(f'Early stopping at epoch {epoch+1}')
                 break
     
+    print('Training completed.')
     return model
 
 

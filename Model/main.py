@@ -5,7 +5,7 @@ from tqdm import tqdm
 import torch
 from mod_srcnn import ModifiedSRCNN
 import config
-from data_loading import WRFDataset, create_loaders
+from data_loading import WRFDataset, create_loaders, MinMaxScaleTransform
 from torch.cuda.amp import autocast, GradScaler
 import xarray as xr
 from training_loop import train_model
@@ -27,7 +27,9 @@ dataset = np.array([ozone_2011["o3"].sel(bottom_top=PRESSURE_LEVEL),
             humidity_2011["QVAPOR"].sel(bottom_top=PRESSURE_LEVEL),
             temp_2011["T2"]])
 
-dataset = WRFDataset(dataset, dataset, config.LATITUDE_CHUNK_SIZE, config.LONGITUDE_CHUNK_SIZE)
+min_max_transform = MinMaxScaleTransform(dataset, dataset, use_half=True)
+dataset = WRFDataset(dataset, dataset, config.LATITUDE_CHUNK_SIZE, 
+                         config.LONGITUDE_CHUNK_SIZE, transform=min_max_transform)
 train_loader, valid_loader, test_loader = create_loaders(dataset, config.BATCH_SIZE)
 
 ## Train the Model

@@ -8,11 +8,11 @@ class MinMaxScaleTransform:
     def __init__(self, high_res_data, low_res_data, use_half=False):
         self.use_half = use_half
 
-        # Compute min and max for each variable at each time point using numpy
-        self.high_res_mins = np.amin(high_res_data, axis=(2, 3), keepdims=True)
-        self.high_res_maxs = np.amax(high_res_data, axis=(2, 3), keepdims=True)
-        self.low_res_mins = np.amin(low_res_data, axis=(2, 3), keepdims=True)
-        self.low_res_maxs = np.amax(low_res_data, axis=(2, 3), keepdims=True)
+        # Compute min and max for each variable at each time point 
+        self.high_res_mins = np.amin(high_res_data, axis=(-2, -1), keepdims=True)
+        self.high_res_maxs = np.amax(high_res_data, axis=(-2, -1), keepdims=True)
+        self.low_res_mins = np.amin(low_res_data, axis=(-2, -1), keepdims=True)
+        self.low_res_maxs = np.amax(low_res_data, axis=(-2, -1), keepdims=True)
 
     def __call__(self, sample):
         high_res, low_res = sample

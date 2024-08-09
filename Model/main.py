@@ -40,7 +40,8 @@ model_srcnn = ModifiedSRCNN(in_channels=config.in_channels, num_blocks=config.nu
                           n1=config.n1, n2=config.n2, f1=config.f1, f2=config.f2, f3=config.f3)
     
 criterion = torch.nn.MSELoss()
-optimizer = torch.optim.Adam(model_srcnn.parameters(), lr=config.LEARNING_RATE)
+optimizer = torch.optim.Adam(model_srcnn.parameters(), lr=config.LEARNING_RATE, 
+                             weight_decay=config.WEIGHT_DECAY)
 
 train_model(model = model_srcnn, train_loader=train_loader, val_loader=valid_loader, 
                 criterion=criterion, optimizer=optimizer, num_epochs=config.NUM_EPOCHS, 

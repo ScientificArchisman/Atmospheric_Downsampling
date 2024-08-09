@@ -6,10 +6,14 @@ class ConvBlock(nn.Module):
     def __init__(self, in_channels, out_channels, kernel_size, stride, padding, use_activation: bool, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
         self.conv = nn.Conv3d(in_channels, out_channels, kernel_size, stride, padding, bias = True)
+        self.dropout = nn.Dropout(p = 0.5)
         self.activation = nn.LeakyReLU(0.2, inplace=True) if use_activation else nn.Identity()
-
+     
+    @torch.autocast(device_type="cuda")
     def forward(self, x):
-        return self.activation(self.conv(x))
+        x = self.conv(x)
+        x = self.dropout(x)
+        return self.activation(x)
     
 class DenseResidualBlock(nn.Module):
     def __init__(self, in_channels: int, channels = 32, beta: float = 0.2, *args, **kwargs):
@@ -23,7 +27,7 @@ class DenseResidualBlock(nn.Module):
                                          use_activation=True if block_no < 4 else False,
                                            kernel_size=3, stride=1, padding=1))
             
-            
+    @torch.autocast(device_type="cuda")      
     def forward(self, x):
         new_inputs = x
         for block in self.conv:
@@ -33,13 +37,14 @@ class DenseResidualBlock(nn.Module):
     
 
 class RRDB(nn.Module):
-    def __init__(self, in_channels, residual_beta, *args, **kwargs) -> None:
+    def __init__(self, in_channels, residual_beta=0.5, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
         self.residual_beta = residual_beta
         self.rrdb = nn.Sequential(*[DenseResidualBlock(in_channels, beta=residual_beta) for _ in range(3)])
-
+    
+    @torch.autocast(device_type="cuda")
     def forward(self, x):
-        return self.rrdb(x) * self.residual_beta + x
+        return self.rrdb(x) + self.residual_beta * x
     
 
 class ModifiedSRCNN(nn.Module):
@@ -61,29 +66,36 @@ class ModifiedSRCNN(nn.Module):
         super().__init__(*args, **kwargs)
         self.conv1 = ConvBlock(in_channels, n1, kernel_size=f1, stride=1, padding=(1, 1, 1), use_activation=True)
         self.bn1 = nn.BatchNorm3d(n1)
-        self.blocks = nn.Sequential(*[RRDB(n1 + in_channels, residual_beta=0.5) for _ in range(num_blocks)])
+        self.blocks = nn.Sequential(*[RRDB(n1 + in_channels, residual_beta=0.8) for _ in range(num_blocks)])
         self.bn2 = nn.BatchNorm3d((n1 + in_channels))
         self.conv2 = ConvBlock(2 * (n1 + in_channels), n2, kernel_size=f2, stride=1, padding=(1, 1, 1), use_activation=True)
         self.bn3 = nn.BatchNorm3d(n2)
         self.conv3 = ConvBlock(n2 + n1 + in_channels, in_channels, kernel_size=f3, stride=1, padding=1, use_activation=False)
         self.bn4 = nn.BatchNorm3d(in_channels)
+        self.dropout = nn.Dropout(p = 0.5)
         self._initialize_weights()
-
+    
+    @torch.autocast(device_type="cuda")
     def forward(self, x):
         
-        initial = x 
-        x = self.conv1(x)
-        x = self.bn1(x)
-        x = torch.concat([x, initial], dim = 1)
-        initial = x
-        x = self.blocks(x)
-        x = self.bn2(x)
-        x = torch.concat([x, initial], dim = 1)
-        x = self.conv2(x) # Take feature maps here
-        x = self.bn3(x)
-        x = torch.concat([x, initial], dim=1)
-        x = self.conv3(x)
-        x = self.bn4(x)
+        with torch.cuda.amp.autocast():
+            initial = x 
+            x = self.conv1(x)
+            x = self.bn1(x)
+            x = self.dropout(x)
+            x = torch.concat([x, initial], dim = 1)
+            initial = x
+            x = self.blocks(x)
+            x = self.bn2(x)
+            x = self.dropout(x)
+            x = torch.concat([x, initial], dim = 1)
+            x = self.conv2(x) # Take feature maps here
+            x = self.bn3(x)
+            x = self.dropout(x)
+            x = torch.concat([x, initial], dim=1)
+            x = self.conv3(x)
+            x = self.bn4(x)
+            x = self.dropout(x)
         return x 
     
     def _initialize_weights(self):

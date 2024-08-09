@@ -6,6 +6,7 @@ BATCH_SIZE: int= 16
 LOG_FOLDER: str = "Logs"
 TENSORBOARD_LOGS: str = "runs/SRCNN"
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+DEVICE_STR = "cuda" if torch.cuda.is_available() else "cpu"
 
 ######### Dataloader hyperparameters ########
 LATITUDE_CHUNK_SIZE = 16

@@ -71,20 +71,19 @@ class ModifiedSRCNN(nn.Module):
 
     def forward(self, x):
         
-        with torch.cuda.amp.autocast():
-            initial = x 
-            x = self.conv1(x)
-            x = self.bn1(x)
-            x = torch.concat([x, initial], dim = 1)
-            initial = x
-            x = self.blocks(x)
-            x = self.bn2(x)
-            x = torch.concat([x, initial], dim = 1)
-            x = self.conv2(x) # Take feature maps here
-            x = self.bn3(x)
-            x = torch.concat([x, initial], dim=1)
-            x = self.conv3(x)
-            x = self.bn4(x)
+        initial = x 
+        x = self.conv1(x)
+        x = self.bn1(x)
+        x = torch.concat([x, initial], dim = 1)
+        initial = x
+        x = self.blocks(x)
+        x = self.bn2(x)
+        x = torch.concat([x, initial], dim = 1)
+        x = self.conv2(x) # Take feature maps here
+        x = self.bn3(x)
+        x = torch.concat([x, initial], dim=1)
+        x = self.conv3(x)
+        x = self.bn4(x)
         return x 
     
     def _initialize_weights(self):

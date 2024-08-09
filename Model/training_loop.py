@@ -1,12 +1,12 @@
 import os 
 import numpy as np 
 import time 
+import torch.amp
 from tqdm import tqdm
 import torch
 from mod_srcnn import ModifiedSRCNN
 import config
 from data_loading import WRFDataset, create_loaders
-from torch.cuda.amp import autocast, GradScaler
 import xarray as xr
 from torch.utils.tensorboard import SummaryWriter
 
@@ -31,6 +31,7 @@ def train_model(model, train_loader, val_loader, criterion, optimizer,
     """
     # Move model to the specified device
     model.to(device)
+    model = model.half()
     
     # Create directories for storing artifacts
     os.makedirs(log_folder, exist_ok=True)
@@ -57,7 +58,12 @@ def train_model(model, train_loader, val_loader, criterion, optimizer,
                 optimizer.zero_grad()
                 
                 # Enable autocast context for mixed precision training
-                with autocast():
+                with torch.amp.autocast(device_type=config.DEVICE_STR):
+                    print(lr_images.dtype)
+                    print(model)
+                    print(next(model.parameters()).dtype)
+
+
                     sr_images = model(lr_images)
                     loss = criterion(sr_images, hr_images)
                 
@@ -81,7 +87,7 @@ def train_model(model, train_loader, val_loader, criterion, optimizer,
             with torch.no_grad():
                 for hr_images, lr_images in val_loader:
                     hr_images, lr_images = hr_images.to(device), lr_images.to(device)
-                    with autocast():
+                    with torch.amp.autocast(device_type=config.DEVICE_STR):
                         sr_images = model(lr_images)
                         loss = criterion(sr_images, hr_images)
                     val_losses.append(loss.item())

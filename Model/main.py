@@ -10,6 +10,9 @@ from torch.cuda.amp import autocast, GradScaler
 import xarray as xr
 from training_loop import train_model
 
+
+print(f"Training started...Training on {config.DEVICE}")
+
 ## Load the Data
 # LOAD the Data and cretae data loaders
 ozone_2011 = xr.open_dataset("/Volumes/Extreme SSD/PRL/data/high_res/WRF_2011.nc")

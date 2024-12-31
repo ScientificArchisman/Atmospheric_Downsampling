@@ -147,6 +147,7 @@ venv/
 ENV/
 env.bak/
 venv.bak/
+statics/pretrained
 
 # VS Code
 .vscode/
